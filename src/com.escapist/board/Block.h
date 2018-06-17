@@ -13,7 +13,7 @@ class Block: public MovablePoint {
         Block(int x, int y);
         Block(const Block &another);
 
-        virtual Block clone();
+        virtual Block* clone() = 0;
 
 //        virtual bool takeAction(Board &board, Move userMove);
 

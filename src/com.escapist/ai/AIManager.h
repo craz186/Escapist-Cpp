@@ -11,8 +11,8 @@
 class Board;
 class AIManager {
 private:
-    std::list<Piece> _aiPieces;
-    const int MaxSearchDepth = 4;
+    std::list<Piece*> _aiPieces;
+    const int MaxSearchDepth = 2;
 
     Move miniMax(Board &board, Piece &currentPiece, Piece &opponentPiece, int currentDepth);
 
@@ -23,11 +23,11 @@ private:
     static int calculateDistanceBetweenTwoPoints(Point first, Point second);
 
 public:
-    AIManager(list<Piece> aiPieces);
+    explicit AIManager(list<Piece *> &_aiPieces);
 
     void moveAllAiPieces(Board &board, Piece &opponent);
 
-    list<Piece> getAiPieces();
+    void getAiPieces(list<Piece *>& returnedList);
 
     void removePiece(Piece &pieceToBeTaken);
 

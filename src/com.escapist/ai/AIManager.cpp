@@ -5,22 +5,21 @@
 #include "AIManager.h"
 #include "../board/Board.h"
 
-AIManager::AIManager(list<Piece> aiPieces) {
-    _aiPieces = aiPieces;
-};
+AIManager::AIManager(list<Piece *> &_aiPieces) : _aiPieces(_aiPieces) {};
 
 void AIManager::moveAllAiPieces(Board &board, Piece &opponent) {
-    for(Piece &aiPiece: _aiPieces) {
+    for(Piece *aiPiece: _aiPieces) {
         // needs to recursively call the next part in a function
         cout << "Start Minimax\n";
-        Move bestAvailableMove = miniMax(board, aiPiece, opponent, 1);
-        board.movePiece(aiPiece, bestAvailableMove);
+        Move bestAvailableMove = miniMax(board, *aiPiece, opponent, 1);
+        board.movePiece(*aiPiece, bestAvailableMove);
     }
 };
 
 Move AIManager::miniMax(Board &board, Piece &currentPiece, Piece &opponentPiece, int currentDepth) {
     Move* bestMove = nullptr;
-    for (Move &move: currentPiece.getMoves()) {
+    list<Move> moves = currentPiece.getMoves();
+    for (Move &move: moves) {
         Board *copyBoard = board.clone();
         Piece *copyCurrentPiece = copyBoard->getPiece(currentPiece.getX(), currentPiece.getY());
         Point previousLocation = *new Point(copyCurrentPiece->getX(), copyCurrentPiece->getY());
@@ -38,7 +37,7 @@ Move AIManager::miniMax(Board &board, Piece &currentPiece, Piece &opponentPiece,
                 bestMove = &move;
                 printDepthTabs(currentDepth);
                 cout << "UserPieceTaken Depth: " << currentDepth << ", IsUser?" << copyCurrentPiece->isUserPiece() << ", "
-                     << previousLocation.toString() << " -> " << afterLocation.toString() << ", Score:" << -currentScore << ", Opponent: " << opponentPiece.toString();
+                     << previousLocation.toString() << " -> " << afterLocation.toString() << ", Score:" << -currentScore << ", Opponent: " << opponentPiece.toString() << "\n";
                 continue;
                 // This case could be triggered by an AI
             case MoveResult::AiPieceTaken:
@@ -46,7 +45,7 @@ Move AIManager::miniMax(Board &board, Piece &currentPiece, Piece &opponentPiece,
                     move.setScore(-currentScore / 10);
                     bestMove = &move;
                     printDepthTabs(currentDepth);
-                    cout << "AIPieceTaken Depth: " << currentDepth << ", IsUser? true, " << previousLocation.toString() << " -> " << afterLocation.toString() << ", Score:" << -currentScore << ", Opponent: " << opponentPiece.toString();
+                    cout << "AIPieceTaken Depth: " << currentDepth << ", IsUser? true, " << previousLocation.toString() << " -> " << afterLocation.toString() << ", Score:" << -currentScore << ", Opponent: " << opponentPiece.toString() << "\n";
                 }
                 continue;
             case MoveResult::BlockInteraction: {
@@ -70,19 +69,19 @@ Move AIManager::miniMax(Board &board, Piece &currentPiece, Piece &opponentPiece,
             currentScore = scoreMove(*copyCurrentPiece, previousLocation, afterLocation, *currentPiece.getLastMove(), *copyBoard);
         }
         printDepthTabs(currentDepth);
-        cout << "Depth: " << currentDepth << ", IsUser? " << copyCurrentPiece->isUserPiece() << ", " << previousLocation.toString() << " -> " << afterLocation.toString() << ", Score:" << currentScore << ", Opponent: " << opponentPiece.toString();
+        cout << "Depth: " << currentDepth << ", IsUser? " << copyCurrentPiece->isUserPiece() << ", " << previousLocation.toString() << " -> " << afterLocation.toString() << ", Score:" << currentScore << ", Opponent: " << opponentPiece.toString() << "\n";
 
         if (bestMove == nullptr || (copyCurrentPiece->isUserPiece() ? currentScore < bestMove->getScore() : currentScore > bestMove->getScore())) {
             move.setScore(currentScore);
             bestMove = &move;
             printDepthTabs(currentDepth);
             cout << "New Best Move - Depth: " << currentDepth + ", IsUser? " << currentPiece.isUserPiece() << ", Destination:" <<
-                 currentPiece.getAllMoveCoordinatesForMove(*bestMove)[bestMove->getDistance()-1].toString() + ", Score:" << bestMove->getScore() << ", Opponent: " << opponentPiece.toString();
+                 currentPiece.getAllMoveCoordinatesForMove(*bestMove)[bestMove->getDistance()-1].toString() + ", Score:" << bestMove->getScore() << ", Opponent: " << opponentPiece.toString() << "\n";
         }
     }
     printDepthTabs(currentDepth);
     cout << "The Best Move - Depth: " << currentDepth << ", IsUser? " << currentPiece.isUserPiece() << ", " << currentPiece.toString()
-           << " -> " << currentPiece.getAllMoveCoordinatesForMove(*bestMove)[bestMove->getDistance()-1].toString() << ", Score:" << bestMove->getScore() << ", Opponent: " << opponentPiece.toString();
+           << " -> " << currentPiece.getAllMoveCoordinatesForMove(*bestMove)[bestMove->getDistance()-1].toString() << ", Score:" << bestMove->getScore() << ", Opponent: " << opponentPiece.toString() << "\n";
     return *bestMove;
 };
 
@@ -124,10 +123,12 @@ int AIManager::calculateDistanceBetweenTwoPoints(Point first, Point second) {
     return (int) (pow(second.getX() - first.getX(), 2) + pow(second.getY() - first.getY(), 2));
 };
 
-list<Piece> AIManager::getAiPieces() {
-    return _aiPieces;
+void AIManager::getAiPieces(list<Piece*>& returnedList) {
+    for (Piece* aiPiece: _aiPieces) {
+        returnedList.push_back(aiPiece);
+    }
 };
 
 void AIManager::removePiece(Piece &pieceToBeTaken) {
-    _aiPieces.remove(pieceToBeTaken);
+    _aiPieces.remove(&pieceToBeTaken);
 };

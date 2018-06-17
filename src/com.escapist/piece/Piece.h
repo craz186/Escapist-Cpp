@@ -20,8 +20,8 @@ public:
     Piece(const Piece &another);
     bool isUserPiece();
 
-    virtual list<Move> getMoves();
-    virtual Piece* clone();
+    virtual list<Move> getMoves() = 0;
+    virtual Piece* clone() = 0;
     std::vector<Point> getAllMoveCoordinatesForMove(Move &move);
 
 

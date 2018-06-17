@@ -1,6 +1,6 @@
 #include "Board.h"
 
-Board::Board(Tile *tiles, list<Block> blocks, Piece &userPiece, GoalTile &goal, AIManager &aiManager, int xLength,
+Board::Board(Tile *tiles, list<Block*> blocks, Piece &userPiece, GoalTile &goal, AIManager &aiManager, int xLength,
              int yLength) {
     _tiles = tiles;
     _blocks = blocks;
@@ -14,28 +14,29 @@ Board::Board(Tile *tiles, list<Block> blocks, Piece &userPiece, GoalTile &goal, 
 
 Board::Board(Board &another) {
     _tiles = another._tiles;
-    for (Block& block : another._blocks) {
+    for (Block *block : another._blocks) {
         _blocks.push_back(block);
     }
-    _userPiece = another._userPiece;
-    list<Piece> aiPieces = *new list<Piece>();
-    for (Piece & aiPiece : another._aiManager->getAiPieces()) {
-        aiPieces.push_back(aiPiece);
+    _userPiece = another._userPiece->clone();
+    auto aiPieces = *new list<Piece*>();
+    another._aiManager->getAiPieces(aiPieces);
+    auto cloneAIPieces = *new list<Piece*>();
+    for (Piece *piece: aiPieces) {
+        cloneAIPieces.push_back(piece->clone());
     }
-
     _goal = another._goal;
-    _aiManager = new AIManager(aiPieces);
+    _aiManager = new AIManager(cloneAIPieces);
     _xLength = another._xLength;
     _yLength = another._yLength;
 };
 
-Board * Board::createBoardFromFile(string path) {
+Board* Board::createBoardFromFile(string path) {
     ifstream boardFile;
     Tile *tiles = nullptr;
-    GoalTile *goal;
-    list<Block> blocks;
-    Piece *userPiece;
-    list<Piece> aiPieces;
+    GoalTile *goal = nullptr;
+    list<Block*> blocks;
+    Piece *userPiece = nullptr;
+    list<Piece*> aiPieces;
     int xLength = 1;
     int yLength = Utils::getNumberOfLinesInFile(path);
     // read in each lines and parse into Tiles and Pieces
@@ -62,30 +63,35 @@ Board * Board::createBoardFromFile(string path) {
             } else if (character == "2") {
                 goal = new GoalTile(x, y);
                 tile = goal;
+            } else if (character.rfind('U',0) == 0) {
+                userPiece = new Dog(x, y);
+                userPiece->setUserPiece(true);
+            } else if (character == "D") {
+                aiPieces.push_back(new Dog(x, y));
             }
-
-//            else if (character == "U") {
-//                userPiece = new Dog(x, y) {IsUserPiece = true};
-//            } else if (character == "D") {
-//                aiPieces.Add(new Dog(x, y));
 //            } else if (character == "B") {
 //                blocks.Add(new PushBlock(x, y));
 //            }
             tiles[(x * xLength) + y] = *tile;
         }
     }
-    AIManager aiManager = *new AIManager(aiPieces);
-    return new Board(tiles, blocks, *userPiece, *goal, aiManager, xLength, yLength);
+    return new Board(tiles, blocks, *userPiece, *goal, *new AIManager(aiPieces), xLength, yLength);
 };
 
 void Board::print() {
     cout << "XLength: " << _xLength << ", YLength: " << _yLength << "\n";
-    cout << "UserPiece: " << _userPiece << "\n";
-    for(Piece &aiPiece: _aiManager->getAiPieces()) {
-        cout << "AIPiece :" << aiPiece.toString();
+    cout << "UserPiece: " << _userPiece->toString() << "\n";
+    list<Piece*> aiPieces;
+    (*_aiManager).getAiPieces(aiPieces);
+    cout << "Size is: " << aiPieces.size() << "\n";
+    if (aiPieces.empty()) cout << "Size 0, uh oh";
+    else {
+        for (Piece *aiPiece: aiPieces) {
+            cout << "AIPiece :" << aiPiece->toString() << "\n";
+        }
     }
-    for(Block & block : _blocks) {
-       cout << "Block :" << block.toString() << "\n";
+    for(Block *block : _blocks) {
+       cout << "Block :" << block->toString() << "\n";
     }
 
     //TODO validate that this is okay -- y < XLength ??????
@@ -154,9 +160,13 @@ MoveResult Board::movePiece(Piece &piece, Move &move) {
 
 Block* Board::checkBlockExists(int x, int y) {
 //    return new Block(0, 0);
-    for (Block & block : _blocks) {
-        if (block.getX() == x && block.getY() == y) {
-            return &block;
+    if (_blocks.empty()) {
+        return nullptr;
+    }
+
+    for (Block *block : _blocks) {
+        if (block->getX() == x && block->getY() == y) {
+            return block;
         }
     }
 };
@@ -172,19 +182,21 @@ Piece* Board::checkPieceExists(int x, int y) {
     if (_userPiece->getX() == x && _userPiece->getY() == y) {
         return _userPiece;
     }
-
-    for (Piece &aiPiece: _aiManager->getAiPieces()) {
-        if (aiPiece.getX() == x && aiPiece.getY() == y) {
-            return &aiPiece;
+    list<Piece*> pieces;
+    _aiManager->getAiPieces(pieces);
+    for (Piece *aiPiece: pieces) {
+        if (aiPiece->getX() == x && aiPiece->getY() == y) {
+            return aiPiece;
         }
     }
+    return nullptr;
 };
 
 Piece* Board::getUserPiece() {
     return _userPiece;
 };
 
-list<Block> Board::getBlocks() {
+list<Block*> Board::getBlocks() {
     return _blocks;
 };
 
@@ -192,9 +204,10 @@ bool Board::isCoordVacant(int x, int y) {
     if (_userPiece->getX() == x && _userPiece->getY() == y) {
         return false;
     }
-
-    for(Piece &piece:_aiManager->getAiPieces()) {
-        if (piece.getX() == x && piece.getY() == y) {
+    list<Piece*> pieces;
+    _aiManager->getAiPieces(pieces);
+    for(Piece *piece:pieces) {
+        if (piece->getX() == x && piece->getY() == y) {
             return false;
         }
     }
@@ -214,9 +227,11 @@ Piece* Board::getPiece(int x, int y) {
         return _userPiece;
     }
 
-    for(Piece &piece: _aiManager->getAiPieces()) {
-        if (piece.getX() == x && piece.getY() == y) {
-            return &piece;
+    list<Piece*> pieces;
+    _aiManager->getAiPieces(pieces);
+    for(Piece *piece: pieces) {
+        if (piece->getX() == x && piece->getY() == y) {
+            return piece;
         }
     }
 };

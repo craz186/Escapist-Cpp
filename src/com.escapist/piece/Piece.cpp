@@ -18,7 +18,7 @@ void Piece::setUserPiece(bool isUserPiece) {
     _isUserPiece = isUserPiece;
 }
 
-Piece::Piece(const Piece &another) : MovablePoint(another.getX(), another.getY()){
+Piece::Piece(const Piece &another) : MovablePoint(another.getX(), another.getY()) {
     _pieceType = another._pieceType;
     _isUserPiece = another._isUserPiece;
 }
@@ -39,25 +39,28 @@ vector<Point> Piece::getAllMoveCoordinatesForMove(Move &move) {
         case Direction::Right:
             returnPoints = getAllPointsOnPath(move, 1, 0);
             break;
-}
+    }
 
-return returnPoints;
+    return returnPoints;
 }
 
 vector<Point> Piece::getAllPointsOnPath(Move move, int xModifier, int yModifier) {
-    vector<Point> returnPoints;
+    auto * returnPoints = new vector<Point>;
     int tempX = getX();
     int tempY = getY();
     for (int i = 0; i < move.getDistance(); i++) {
         tempX += xModifier;
         tempY += yModifier;
-        returnPoints.emplace_back(tempX, tempY);
+        returnPoints -> emplace_back(tempX, tempY);
     }
-    return returnPoints;
+    return *returnPoints;
 }
 
 string Piece::toString() {
     ostringstream oss;
+    if (_pieceType == PieceType::Dog) {
+        oss << "DOG";
+    }
     oss << "(" << getX() << "," << getY() << ")";
     return oss.str();
 }

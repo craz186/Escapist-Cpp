@@ -34,7 +34,7 @@ public:
 
     list<Move> getMoves() override;
 
-    virtual Dog * clone() override;
+    Dog * clone() override;
 };
 
 

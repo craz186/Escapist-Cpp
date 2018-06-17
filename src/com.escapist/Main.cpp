@@ -7,13 +7,14 @@
 
 int main()
 {
-    Board *board = Board::createBoardFromFile(R"(C:\Users\Sean\Documents\Chessmate v2\Assets\Levels\TestLevel.txt)");
+    Board &board = *Board::createBoardFromFile(R"(C:\Users\Sean\Documents\Chessmate v2\Assets\Levels\TestLevel.txt)");
+
     int i = 0;
     while (i < 10) {
-        board->print();
-        UserInput::makeUserMove(*board);
-        board->print();
-        board->makeAIMove();
+        board.print();
+        UserInput::makeUserMove(board);
+        board.print();
+        board.makeAIMove();
         i++;
     }
 }

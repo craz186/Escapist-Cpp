@@ -13,7 +13,7 @@ class Move {
     private:
         int _distance;
         Direction _direction;
-        int _score;
+        int _score = 0;
 
     public:
         Move(Direction direction, int distance);

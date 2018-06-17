@@ -22,7 +22,7 @@ class Board {
 
         Tile *_tiles;
         GoalTile *_goal;
-        list<Block> _blocks;
+        list<Block*> _blocks;
         Piece *_userPiece;
         AIManager *_aiManager;
         int _xLength = 0;
@@ -30,7 +30,7 @@ class Board {
 
 
     public:
-        Board(Tile *tiles, list <Block> blocks, Piece &userPiece, GoalTile &goal, AIManager &aiManager, int xLength,
+        Board(Tile *tiles, list <Block*> blocks, Piece &userPiece, GoalTile &goal, AIManager &aiManager, int xLength,
                              int yLength);
 
         Board(Board &another);
@@ -49,7 +49,7 @@ class Board {
 
         Piece* getUserPiece();
 
-        list<Block> getBlocks();
+        list<Block*> getBlocks();
 
         bool isCoordVacant(int x, int y);
 
@@ -59,6 +59,6 @@ class Board {
 
         Piece* getPiece(int x, int y);
 
-        static Board * createBoardFromFile(string path);
+        static Board* createBoardFromFile(string path);
 };
 #endif //ESCAPIST_BOARD_H
